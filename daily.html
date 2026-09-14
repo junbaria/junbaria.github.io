@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Daily Countdown 🌙</title>
+  <meta name="description" content="Counts down to the nightly window: starts 21:00 UTC+8, ends 06:00 the next day. Pure HTML, CSS & vanilla JS." />
+  <meta name="theme-color" content="#0b1220" />
+  <meta property="og:title" content="Daily Countdown" />
+  <meta property="og:description" content="Nightly window — starts 21:00 UTC+8, ends 06:00 the next day." />
+  <style>
+    /* ===== CSS RESET (trimmed) ===== */
+    *,*::before,*::after{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;line-height:1.4;-webkit-font-smoothing:antialiased;background:#0b1220;color:#e6f0ff}
+    button{font:inherit}
+    a{color:inherit;text-decoration:none}
+
+    /* ===== THEME TOKENS ===== */
+    :root{
+      --bg: radial-gradient(1200px 800px at 10% 10%,#0e1a33 0%,#0b1220 40%,#090f1a 100%);
+      --card: rgba(255,255,255,.08);
+      --card-border: rgba(255,255,255,.16);
+      --text: #e6f0ff;
+      --muted: #a9b5d1;
+      --accent: #ff4757;
+      --accent-2: #1dd1a1;
+      --gold: #ffc857;
+      --shadow: 0 10px 30px rgba(0,0,0,.4);
+    }
+    .light{
+      --bg: radial-gradient(1200px 800px at 10% 10%,#ffffff 0%,#f2f5ff 40%,#e8efff 100%);
+      --card: rgba(255,255,255,.82);
+      --card-border: rgba(0,0,0,.08);
+      --text: #0d1b2a;
+      --muted: #4c5c77;
+      --accent: #d7263d;
+      --accent-2: #0ea5e9;
+      --gold: #c79235;
+      --shadow: 0 8px 20px rgba(0,0,0,.12);
+    }
+
+    /* ===== LAYOUT ===== */
+    .wrap{min-height:100%;display:grid;place-items:center;background:var(--bg)}
+    .app{width:min(100%,980px);padding:clamp(16px,2vw,32px)}
+
+    /* ===== HEADER ===== */
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#4c6ef5,#1b3a6b);box-shadow:var(--shadow);color:#fff;font-size:22px}
+    h1{margin:0;font-size:clamp(22px,2.6vw,32px);letter-spacing:.5px}
+    .btn{border:1px solid var(--card-border);background:var(--card);color:var(--text);padding:10px 14px;border-radius:14px;backdrop-filter:blur(10px);box-shadow:var(--shadow);cursor:pointer;display:inline-flex;align-items:center;gap:10px;transition:transform .12s ease,border-color .2s ease}
+    .btn:hover{transform:translateY(-1px);border-color:transparent}
+
+    /* ===== CARD ===== */
+    .card{border:1px solid var(--card-border);background:var(--card);border-radius:24px;box-shadow:var(--shadow);padding:clamp(18px,2.2vw,28px);display:flex;flex-direction:column;gap:18px}
+    .tag{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:8px 12px;border:1px dashed var(--card-border);width:max-content;max-width:100%}
+    .tag .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 3px rgba(255,200,87,.2);flex:none}
+    .tag .dot.live{background:var(--accent-2);box-shadow:0 0 0 3px rgba(29,209,161,.2)}
+    .headline{font-size:clamp(26px,4.4vw,56px);line-height:1.05;margin:0;letter-spacing:.4px}
+    .sub{margin:0;color:var(--muted);font-size:clamp(14px,1.6vw,16px)}
+
+    /* ===== COUNTDOWN GRID (3 cells — this cycle never spans a day) ===== */
+    .time-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    @media (max-width:640px){.time-grid{grid-template-columns:repeat(3,1fr)}}
+    .time{border:1px solid var(--card-border);background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.02));border-radius:18px;padding:14px 12px;text-align:center}
+    .time strong{display:block;font-variant-numeric:tabular-nums;letter-spacing:1px;font-size:clamp(28px,5.4vw,46px)}
+    .time span{display:block;color:var(--muted);font-size:12px;letter-spacing:.8px;text-transform:uppercase}
+
+    /* ===== PROGRESS ===== */
+    .progress{height:12px;background:rgba(255,255,255,.1);border:1px solid var(--card-border);border-radius:999px;overflow:hidden}
+    .bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .6s ease}
+    .progress-label{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:12px;margin-top:8px}
+
+    /* ===== FOOTER ===== */
+    .foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px;font-size:12px;color:var(--muted)}
+    .links{display:flex;gap:8px;flex-wrap:wrap}
+    .pill{border:1px solid var(--card-border);padding:6px 10px;border-radius:999px}
+    .pill:hover{border-color:var(--accent-2)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="app">
+      <div class="top">
+        <div class="brand">
+          <div class="logo" aria-hidden="true">🌙</div>
+          <h1>Daily Countdown</h1>
+        </div>
+        <button class="btn" id="toggleTheme" aria-label="Toggle theme" title="Toggle theme">🌓 Theme</button>
+      </div>
+
+      <section class="card" aria-labelledby="headline">
+        <div class="tag"><span class="dot" id="tagDot" aria-hidden="true"></span> <span id="tagText">Counting down to 21:00</span></div>
+        <h2 id="headline" class="headline">—</h2>
+        <p class="sub">
+          Every night runs <strong>21:00 → 06:00 the next day (UTC+8)</strong>. Outside the window the clock
+          counts down to the next 21:00. Fixed UTC+8 offset — no DST, no tz database.
+        </p>
+
+        <div class="time-grid" role="group" aria-label="Time until the next window boundary">
+          <div class="time" aria-live="polite"><strong id="hours">--</strong><span>Hours</span></div>
+          <div class="time"><strong id="mins">--</strong><span>Minutes</span></div>
+          <div class="time"><strong id="secs">--</strong><span>Seconds</span></div>
+        </div>
+
+        <div>
+          <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+          <div class="progress-label"><span id="barLabel">—</span><span id="pct">0%</span></div>
+        </div>
+      </section>
+
+      <div class="foot">
+        <div class="links">
+          <span class="pill" id="windowLabel">Window: 21:00 → 06:00 UTC+8</span>
+          <span class="pill" id="stateLabel">—</span>
+        </div>
+        <span><span id="nowLabel"></span> · <a class="pill" href="./">🏠 Home</a></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ===== Night model (UTC+8) — pure logic, no DOM. Read by check-pages.mjs. ===== */
+    const TZ_OFFSET = 8 * 3600 * 1000;   // UTC+8, fixed (China Standard Time has no DST)
+    const HOUR = 3600 * 1000;
+    const DAY = 86400000;
+    const NIGHT_START_H = 21;            // window opens 21:00 UTC+8
+    const NIGHT_MS = 9 * HOUR;           // …and closes 06:00 the next day
+
+    /** A Date whose *UTC* fields are the UTC+8 wall clock for the instant `t` (ms epoch). */
+    const shifted = (t) => new Date(t + TZ_OFFSET);
+
+    /** The instant of `hour`:00 UTC+8 on the UTC+8 calendar day that contains `t`. */
+    function atHour(t, hour) {
+      const l = shifted(t);
+      return Date.UTC(l.getUTCFullYear(), l.getUTCMonth(), l.getUTCDate(), hour) - TZ_OFFSET;
+    }
+
+    /** The night window around `t`: 21:00 → 06:00 next day. `inside` = the window is open now. */
+    function night(t) {
+      const open = atHour(t, NIGHT_START_H);
+      const start = t >= open ? open : open - DAY;   // 00:00–21:00 runs belong to yesterday's 21:00
+      const end = start + NIGHT_MS;
+      const nextStart = start + DAY;
+      const inside = t < end;
+      return {
+        start, end, nextStart, inside,
+        target: inside ? end : nextStart,            // count to 06:00 while open, else to 21:00
+        remaining: (inside ? end : nextStart) - t,
+        // ponytail: bar is phase-local (9h night / 15h day); no clamping beyond 0..1 needed
+        progress: inside
+          ? (t - start) / NIGHT_MS
+          : Math.max(0, (t - end) / (nextStart - end)),
+      };
+    }
+
+    /** Format an instant as its UTC+8 wall clock (shift, then read as UTC). */
+    function fmtLocal(t, opts) {
+      return new Intl.DateTimeFormat('en-GB', { ...opts, timeZone: 'UTC' }).format(shifted(t));
+    }
+  </script>
+
+  <script>
+    /* ===== Page ===== */
+    const $ = (sel) => document.querySelector(sel);
+    const pad2 = (n) => String(n).padStart(2, '0');
+
+    const root = document.documentElement;
+    if (localStorage.getItem('theme') === 'light') root.classList.add('light');
+    $('#toggleTheme').addEventListener('click', () => {
+      root.classList.toggle('light');
+      localStorage.setItem('theme', root.classList.contains('light') ? 'light' : 'dark');
+    });
+
+    const els = {
+      hours: $('#hours'), mins: $('#mins'), secs: $('#secs'),
+      bar: $('#bar'), pct: $('#pct'), barLabel: $('#barLabel'),
+      tag: $('#tagText'), dot: $('#tagDot'), state: $('#stateLabel'), now: $('#nowLabel'),
+    };
+    const headline = $('#headline');
+
+    function tick() {
+      const now = Date.now();
+      const n = night(now);
+
+      const total = Math.floor(n.remaining / 1000);
+      const h = Math.floor(total / 3600), m = Math.floor(total / 60) % 60, s = total % 60;
+      els.hours.textContent = pad2(h);
+      els.mins.textContent = pad2(m);
+      els.secs.textContent = pad2(s);
+
+      headline.textContent = n.inside
+        ? `Night is live — ${h}h ${m}m left`
+        : `Only ${h}h ${m}m until 21:00`;
+
+      els.bar.style.width = (Math.min(1, n.progress) * 100).toFixed(1) + '%';
+      els.pct.textContent = (Math.min(1, n.progress) * 100).toFixed(1) + '%';
+      els.barLabel.textContent = n.inside
+        ? 'Night progress (21:00 → 06:00 UTC+8)'
+        : 'Day progress (06:00 → 21:00 UTC+8)';
+
+      els.dot.classList.toggle('live', n.inside);
+      els.tag.textContent = n.inside
+        ? 'Window is open — closes at 06:00'
+        : `Counting down to tonight\u2019s 21:00`;
+      els.state.textContent = n.inside
+        ? `Open until ${fmtLocal(n.end, { weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false })} UTC+8`
+        : `Opens ${fmtLocal(n.nextStart, { weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false })} UTC+8`;
+
+      els.now.textContent = 'Now: ' + fmtLocal(now, {
+        weekday: 'short', day: 'numeric', month: 'short',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+      }) + ' UTC+8';
+    }
+
+    tick();
+    setInterval(tick, 1000);
+  </script>
+</body>
+</html>
