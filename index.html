@@ -3,18 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Christmas Countdown 🎄</title>
-  <meta name="description" content="Beautiful Christmas countdown with animated snow, festive gradients, and a smooth timer—pure HTML, CSS & vanilla JS." />
+  <title>Jun's Countdowns ⏳</title>
+  <meta name="description" content="Index of countdown pages: Christmas Countdown and Saturday Countdown (UTC+8). Pure HTML, CSS & vanilla JS." />
   <meta name="theme-color" content="#0b1220" />
   <style>
     /* ===== CSS RESET (trimmed) ===== */
     *,*::before,*::after{box-sizing:border-box}
     html,body{height:100%}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;line-height:1.4;-webkit-font-smoothing:antialiased;background:#0b1220;color:#e6f0ff}
-    img{max-width:100%;display:block}
-    button{font:inherit}
+    a{color:inherit;text-decoration:none}
 
-    /* ===== THEME TOKENS ===== */
+    /* ===== THEME TOKENS (shared with the two countdown pages) ===== */
     :root{
       --bg: radial-gradient(1200px 800px at 10% 10%,#0e1a33 0%,#0b1220 40%,#090f1a 100%);
       --card: rgba(255,255,255,.08);
@@ -25,8 +24,6 @@
       --accent-2: #1dd1a1;
       --gold: #ffc857;
       --shadow: 0 10px 30px rgba(0,0,0,.4);
-      --green: #2ecc71;
-      --red: #ff6b6b;
     }
     .light{
       --bg: radial-gradient(1200px 800px at 10% 10%,#ffffff 0%,#f2f5ff 40%,#e8efff 100%);
@@ -41,324 +38,83 @@
     }
 
     /* ===== LAYOUT ===== */
-    .wrap{min-height:100%;display:grid;place-items:center;background:var(--bg);position:relative;overflow:hidden}
-    .app{width:min(100%,980px);padding:clamp(16px,2vw,32px)}
-
-    /* ===== SNOW ===== */
-    .snow{position:absolute;inset:0;pointer-events:none;overflow:hidden}
-    .flake{position:absolute;top:-10px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.15));opacity:.8}
-    @keyframes fall{to{transform:translate(var(--dx,0),110vh) rotate(var(--rot,90deg));opacity:.95}}
+    .wrap{min-height:100%;display:grid;place-items:center;background:var(--bg)}
+    .app{width:min(100%,760px);padding:clamp(16px,2vw,32px)}
 
     /* ===== HEADER ===== */
     .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
     .brand{display:flex;align-items:center;gap:12px}
-    .logo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#1b7,#0a6);box-shadow:var(--shadow);color:#fff;font-size:22px}
+    .logo{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#1dd1a1,#0a6);box-shadow:var(--shadow);color:#fff;font-size:22px}
     h1{margin:0;font-size:clamp(22px,2.6vw,32px);letter-spacing:.5px}
-
-    .actions{display:flex;gap:10px}
-    .btn{border:1px solid var(--card-border);background:var(--card);color:var(--text);padding:10px 14px;border-radius:14px;backdrop-filter:blur(10px);box-shadow:var(--shadow);cursor:pointer;display:inline-flex;align-items:center;gap:10px;transition:transform .12s ease,background .2s ease,border-color .2s ease}
+    .btn{border:1px solid var(--card-border);background:var(--card);color:var(--text);padding:10px 14px;border-radius:14px;backdrop-filter:blur(10px);box-shadow:var(--shadow);cursor:pointer;display:inline-flex;align-items:center;gap:10px;transition:transform .12s ease,border-color .2s ease}
     .btn:hover{transform:translateY(-1px);border-color:transparent}
 
-    /* ===== CARD ===== */
-    .card{border:1px solid var(--card-border);background:var(--card);border-radius:24px;box-shadow:var(--shadow);padding:clamp(18px,2.2vw,28px)}
-    .hero{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(16px,2.4vw,28px)}
-    @media (max-width:900px){.hero{grid-template-columns:1fr}}
-
-    .left{display:flex;flex-direction:column;gap:18px}
-    .tag{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:8px 12px;border:1px dashed var(--card-border);width:max-content}
-    .tag .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 3px rgba(255,200,87,.2)}
-
-    .headline{font-size:clamp(26px,4.4vw,56px);line-height:1.05;margin:0;letter-spacing:.4px}
-    .sub{margin:0;color:var(--muted);font-size:clamp(14px,1.6vw,16px)}
-
-    /* ===== COUNTDOWN GRID ===== */
-    .time-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:10px}
-    @media (max-width:640px){.time-grid{grid-template-columns:repeat(2,1fr)}}
-
-    .time{border:1px solid var(--card-border);background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.02));border-radius:18px;padding:14px 12px;text-align:center;position:relative;overflow:hidden}
-    .time strong{display:block;font-variant-numeric:tabular-nums;letter-spacing:1px;font-size:clamp(28px,5.4vw,46px)}
-    .time span{display:block;color:var(--muted);font-size:12px;letter-spacing:.8px;text-transform:uppercase}
-
-    /* ===== PROGRESS ===== */
-    .progress{height:12px;background:rgba(255,255,255,.1);border:1px solid var(--card-border);border-radius:999px;overflow:hidden;position:relative}
-    .bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .6s ease}
-    .progress-label{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:8px}
-
-    /* ===== RIGHT PANEL ===== */
-    .right{display:flex;flex-direction:column;gap:14px;justify-content:center}
-    .illustration{aspect-ratio:1.2/1;border-radius:20px;position:relative;overflow:hidden;border:1px solid var(--card-border);background:radial-gradient(120% 150% at 30% 20%,#ffecd2 0%, #fcb69f 40%, rgba(255,255,255,.4) 60%),
-                  radial-gradient(120% 150% at 80% 0%, #8EC5FC 0%, #E0C3FC 50%, transparent 60%)}
-    .tree{position:absolute;bottom:-2%;left:10%;width:50%;filter:drop-shadow(0 10px 30px rgba(0,0,0,.3))}
-    .bauble{position:absolute;width:12px;height:12px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 6px rgba(255,200,87,.2)}
-    .star{position:absolute;top:6%;left:52%;width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:20px solid #ffd166;filter:drop-shadow(0 2px 0 #ccab3f)}
+    /* ===== NAV CARDS ===== */
+    .nav{display:flex;flex-direction:column;gap:16px}
+    .nav-card{border:1px solid var(--card-border);background:var(--card);border-radius:24px;box-shadow:var(--shadow);padding:clamp(18px,2.2vw,28px);display:flex;align-items:center;gap:18px;transition:transform .12s ease,border-color .2s ease}
+    .nav-card:hover{transform:translateY(-2px);border-color:var(--accent-2)}
+    .nav-card .icon{width:52px;height:52px;flex:none;border-radius:16px;display:grid;place-items:center;font-size:26px;background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04));border:1px solid var(--card-border)}
+    .nav-card h2{margin:0 0 4px;font-size:clamp(18px,2vw,22px)}
+    .nav-card p{margin:0;color:var(--muted);font-size:14px}
+    .chev{margin-left:auto;flex:none;color:var(--muted);font-size:20px}
 
     /* ===== FOOTER ===== */
-    .foot{display:flex;align-items:center;justify-content:space-between;margin-top:16px;font-size:12px;color:var(--muted)}
-    .links{display:flex;gap:8px}
+    .foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px;font-size:12px;color:var(--muted)}
     .pill{border:1px solid var(--card-border);padding:6px 10px;border-radius:999px}
-
-    /* ===== TOAST ===== */
-    .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--card);border:1px solid var(--card-border);color:var(--text);padding:10px 14px;border-radius:12px;box-shadow:var(--shadow);transition:all .25s ease}
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-    /* ===== CONFETTI (canvas covers screen) ===== */
-    #confetti{position:fixed;inset:0;pointer-events:none}
   </style>
 </head>
 <body>
-  <div class="wrap" id="root">
-    <!-- Snow layer -->
-    <div class="snow" aria-hidden="true" id="snow"></div>
-
+  <div class="wrap">
     <div class="app">
       <div class="top">
         <div class="brand">
-          <div class="logo" aria-hidden="true">🎄</div>
-          <h1>Christmas Countdown</h1>
+          <div class="logo" aria-hidden="true">⏳</div>
+          <h1>Jun's Countdowns</h1>
         </div>
-        <div class="actions">
-          <button class="btn" id="toggleTheme" aria-label="Toggle theme" title="Toggle theme">🌓 Theme</button>
-          <button class="btn" id="shareBtn" aria-label="Share countdown" title="Share countdown">🔗 Share</button>
-          <button class="btn" id="muteBtn" aria-label="Toggle chime" title="Toggle chime">🔔 Chime: Off</button>
-        </div>
+        <button class="btn" id="toggleTheme" aria-label="Toggle theme" title="Toggle theme">🌓 Theme</button>
       </div>
 
-      <section class="card hero" aria-labelledby="headline">
-        <div class="left">
-          <div class="tag"><span class="dot" aria-hidden="true"></span> <span id="tagText">Counting down to December 25</span></div>
-          <h2 id="headline" class="headline">Only <span id="daysBig">--</span> days to go!</h2>
-          <p class="sub">A cozy, minimal, and responsive timer with animated snow, confetti at midnight, and a progress bar for the season—built with just HTML, CSS, and vanilla JS.</p>
+      <nav class="nav" aria-label="Countdown pages">
+        <a class="nav-card" href="christmas.html">
+          <span class="icon" aria-hidden="true">🎄</span>
+          <span>
+            <h2>Christmas Countdown</h2>
+            <p>Days, hours, minutes and seconds to December 25 — snow, confetti, and a season progress bar.</p>
+          </span>
+          <span class="chev" aria-hidden="true">→</span>
+        </a>
 
-          <div class="time-grid" role="group" aria-label="Countdown">
-            <div class="time" aria-live="polite"><strong id="days">--</strong><span>Days</span></div>
-            <div class="time"><strong id="hours">--</strong><span>Hours</span></div>
-            <div class="time"><strong id="mins">--</strong><span>Minutes</span></div>
-            <div class="time"><strong id="secs">--</strong><span>Seconds</span></div>
-          </div>
-
-          <div>
-            <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
-            <div class="progress-label"><span>Season progress</span><span id="pct">0%</span></div>
-          </div>
-        </div>
-
-        <div class="right">
-          <div class="illustration" aria-hidden="true">
-            <svg class="tree" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="g" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stop-color="#2ecc71"/>
-                  <stop offset="100%" stop-color="#198754"/>
-                </linearGradient>
-              </defs>
-              <polygon fill="url(#g)" points="100,0 35,80 165,80"/>
-              <polygon fill="url(#g)" points="100,50 20,140 180,140"/>
-              <polygon fill="url(#g)" points="100,110 5,210 195,210"/>
-              <rect x="90" y="205" width="20" height="25" fill="#8d5524" rx="3"/>
-            </svg>
-            <div class="bauble" style="left:20%; top:36%"></div>
-            <div class="bauble" style="left:70%; top:48%; background:#ff6b6b"></div>
-            <div class="bauble" style="left:48%; top:62%; background:#74c0fc"></div>
-            <div class="star"></div>
-          </div>
-          <button class="btn" id="addToCalendar">📅 Add to Calendar</button>
-          <button class="btn" id="celebrateNow">✨ Celebrate now</button>
-        </div>
-      </section>
+        <a class="nav-card" href="saturday.html">
+          <span class="icon" aria-hidden="true">⏳</span>
+          <span>
+            <h2>Saturday Countdown</h2>
+            <p>Counts down to Saturday 23:59:59 (UTC+8), then resets every Monday 00:00 (UTC+8).</p>
+          </span>
+          <span class="chev" aria-hidden="true">→</span>
+        </a>
+      </nav>
 
       <div class="foot">
-        <div class="links">
-          <span class="pill">Made with ❤︎ & JS</span>
-          <span class="pill" id="targetLabel">Target: Dec 25, <span id="yearLabel">YYYY</span></span>
-        </div>
-        <span id="tz"></span>
+        <span class="pill">Made with ❤︎ &amp; JS</span>
+        <span class="pill" id="nowLabel"></span>
       </div>
     </div>
-
-    <canvas id="confetti"></canvas>
-    <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <audio id="chime" preload="auto">
-      <source src="data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQAA" type="audio/mpeg">
-    </audio>
   </div>
 
   <script>
-    // ========= Utility =========
-    const $ = (sel) => document.querySelector(sel);
-    const toast = (msg) => { const el = $('#toast'); el.textContent = msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'), 2200); };
-
-    // ========= Theme =========
+    /* Nav page only — no countdown math here. The three countdown formulas live in the two pages
+       themselves; a second copy on the index would drift the moment one of them changes. */
     const root = document.documentElement;
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') root.classList.add('light');
-    $('#toggleTheme').addEventListener('click', ()=>{
+    if (localStorage.getItem('theme') === 'light') root.classList.add('light');
+    document.getElementById('toggleTheme').addEventListener('click', () => {
       root.classList.toggle('light');
       localStorage.setItem('theme', root.classList.contains('light') ? 'light' : 'dark');
     });
 
-    // ========= Snow =========
-    const snow = $('#snow');
-    const makeFlake = () => {
-      const f = document.createElement('div');
-      f.className = 'flake';
-      f.textContent = Math.random() < .5 ? '❄️' : '✦';
-      const size = 12 + Math.random()*16;
-      f.style.left = Math.random()*100 + 'vw';
-      f.style.fontSize = size + 'px';
-      f.style.animation = `fall ${8 + Math.random()*12}s linear infinite`;
-      f.style.setProperty('--dx', (Math.random()*50 - 25) + 'vw');
-      f.style.setProperty('--rot', (Math.random()*180 - 90) + 'deg');
-      snow.appendChild(f);
-      setTimeout(()=>f.remove(), 21000);
-    };
-    for (let i=0;i<40;i++) setTimeout(makeFlake, Math.random()*1500);
-    setInterval(makeFlake, 600);
-
-    // ========= Countdown =========
-    const daysEl = $('#days'), hoursEl = $('#hours'), minsEl = $('#mins'), secsEl = $('#secs');
-    const daysBig = $('#daysBig');
-    const bar = $('#bar');
-    const pctEl = $('#pct');
-    const yearLabel = $('#yearLabel');
-    const targetLabel = $('#targetLabel');
-    const tz = $('#tz');
-    tz.textContent = new Intl.DateTimeFormat(undefined,{timeZoneName:'long'}).format(new Date()).split(', ').pop();
-
-    function nextChristmas(from = new Date()){
-      const y = from.getFullYear();
-      const target = new Date(y, 11, 25, 0,0,0,0); // Dec is 11
-      return from > target ? new Date(y+1, 11, 25) : target;
-    }
-
-    let TARGET = nextChristmas();
-    yearLabel.textContent = TARGET.getFullYear();
-
-    function updateTag(){
-      const now = new Date();
-      const diffDays = Math.ceil((TARGET - now) / (1000*60*60*24));
-      const tagText = diffDays > 1 ? `Counting down to December 25` : diffDays === 1 ? `Christmas is tomorrow!` : diffDays === 0 ? `It's Christmas today!` : `Merry Christmas!`;
-      $('#tagText').textContent = tagText;
-    }
-
-    function seasonPercent(){
-      // From Nov 1 (start of "holiday season") to Dec 25
-      const now = new Date();
-      const seasonStart = new Date(TARGET.getFullYear(), 10, 1, 0,0,0,0); // Nov 1
-      // if we're after Dec 25 but before next Nov, recompute using next year
-      const seasonEnd = new Date(TARGET.getFullYear(), 11, 25, 0,0,0,0);
-      const a = seasonStart.getTime(), b = seasonEnd.getTime(), t = now.getTime();
-      const pct = Math.max(0, Math.min(1, (t - a) / (b - a)));
-      return isFinite(pct) ? pct : 0;
-    }
-
-    function tick(){
-      const now = new Date();
-      if (now > TARGET) {
-        TARGET = nextChristmas(now);
-        yearLabel.textContent = TARGET.getFullYear();
-      }
-      const ms = TARGET - now;
-      const total = Math.floor(ms/1000);
-      const s = total % 60;
-      const m = Math.floor(total/60) % 60;
-      const h = Math.floor(total/3600) % 24;
-      const d = Math.floor(total/86400);
-      daysEl.textContent = d.toString();
-      hoursEl.textContent = h.toString().padStart(2,'0');
-      minsEl.textContent = m.toString().padStart(2,'0');
-      secsEl.textContent = s.toString().padStart(2,'0');
-      daysBig.textContent = d.toString();
-      bar.style.width = (seasonPercent()*100).toFixed(1) + '%';
-      pctEl.textContent = (seasonPercent()*100).toFixed(1) + '%';
-      updateTag();
-      // fire at exactly midnight Dec 25 local
-      if (ms <= 1000 && ms > -1000) celebrate();
-    }
-    tick();
-    setInterval(tick, 1000);
-
-    // ========= Share & Calendar =========
-    $('#shareBtn').addEventListener('click', async () => {
-      const text = `🎄 Christmas Countdown → ${location.href}`;
-      if (navigator.share) {
-        try { await navigator.share({ title: 'Christmas Countdown', text, url: location.href }); }
-        catch(e){ /* user canceled */ }
-      } else {
-        navigator.clipboard.writeText(text);
-        toast('Link copied to clipboard');
-      }
-    });
-
-    $('#addToCalendar').addEventListener('click', () => {
-      const start = new Date(TARGET.getFullYear(), 11, 25, 0,0,0);
-      const end = new Date(TARGET.getFullYear(), 11, 26, 0,0,0);
-      const pad = (n)=> String(n).padStart(2,'0');
-      const fmt = (d)=> d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+pad(d.getUTCMinutes())+pad(d.getUTCSeconds())+'Z';
-      const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Christmas Countdown//EN\nBEGIN:VEVENT\nUID:${Date.now()}@xmas\nDTSTAMP:${fmt(new Date())}\nDTSTART:${fmt(start)}\nDTEND:${fmt(end)}\nSUMMARY:Christmas Day\nDESCRIPTION:Christmas Countdown reminder\nEND:VEVENT\nEND:VCALENDAR`;
-      const blob = new Blob([ics], {type:'text/calendar'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `christmas-${start.getFullYear()}.ics`; a.click();
-      setTimeout(()=>URL.revokeObjectURL(url), 1500);
-    });
-
-    // ========= Chime =========
-    const chime = $('#chime');
-    const muteBtn = $('#muteBtn');
-    let muted = localStorage.getItem('muted') === '1';
-    const updateMute = ()=>{ muteBtn.textContent = `🔔 Chime: ${muted? 'Off':'On'}`; };
-    updateMute();
-    muteBtn.addEventListener('click', ()=>{ muted = !muted; localStorage.setItem('muted', muted?'1':'0'); updateMute(); });
-
-    function playChime(){
-      if (muted) return;
-      try { chime.currentTime = 0; chime.play(); } catch (e) {}
-    }
-
-    // ========= Confetti =========
-    const canvas = document.getElementById('confetti');
-    const ctx = canvas.getContext('2d');
-    const conf = [];
-    function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
-    addEventListener('resize', resize); resize();
-
-    function addConfetti(n=150){
-      for(let i=0;i<n;i++){
-        conf.push({
-          x: Math.random()*canvas.width,
-          y: -20 - Math.random()*canvas.height,
-          s: 4+Math.random()*6,
-          r: Math.random()*360,
-          v: 1+Math.random()*3,
-          drift: (Math.random()-.5)*2,
-        });
-      }
-    }
-    function drawConfetti(){
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      conf.forEach(p=>{
-        p.y += p.v; p.x += p.drift; p.r += p.v*2;
-        if (p.y > canvas.height+20) { p.y = -10; p.x = Math.random()*canvas.width; }
-        ctx.save();
-        ctx.translate(p.x,p.y); ctx.rotate(p.r*Math.PI/180);
-        ctx.fillStyle = ['#ff6b6b','#ffd166','#4dabf7','#69db7c','#b197fc'][Math.floor(Math.random()*5)];
-        ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s);
-        ctx.restore();
-      });
-      if (conf.length) requestAnimationFrame(drawConfetti);
-    }
-
-    function celebrate(){
-      playChime();
-      addConfetti(200);
-      drawConfetti();
-      toast('🎉 Merry Christmas!');
-    }
-
-    $('#celebrateNow').addEventListener('click', celebrate);
-
-    // Initial announce
-    updateTag();
+    document.getElementById('nowLabel').textContent = 'Now: ' + new Intl.DateTimeFormat('en-GB', {
+      weekday: 'short', day: 'numeric', month: 'short',
+      hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Shanghai',
+    }).format(new Date()) + ' UTC+8';
   </script>
 </body>
 </html>
