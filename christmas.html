@@ -185,6 +185,28 @@
   </div>
 
   <script>
+    /* ===== Christmas model (UTC+8) — pure logic, no DOM. Read by check-pages.mjs. ===== */
+    const TZ_OFFSET = 8 * 3600 * 1000;              // UTC+8, fixed — no DST, no tz database
+    const shifted = (t) => new Date(t + TZ_OFFSET); // read UTC fields for the UTC+8 wall clock
+
+    /** Dec 25 00:00 UTC+8 (== Dec 24 16:00Z) for the year of `t`; the next one once it's past. */
+    function nextChristmas(t = Date.now()) {
+      const y = shifted(t).getUTCFullYear();
+      const target = Date.UTC(y, 11, 24, 16);
+      return t > target ? Date.UTC(y + 1, 11, 24, 16) : target;
+    }
+
+    /** Year of the December 25 the countdown aims at, in UTC+8. */
+    const christmasYear = (t) => shifted(t).getUTCFullYear();
+
+    /** Holiday season in UTC+8: Nov 1 00:00 -> Dec 25 00:00, as ms instants. */
+    const seasonWindow = (year) => ({
+      start: Date.UTC(year, 9, 31, 16),   // Nov 1 00:00 UTC+8 == Oct 31 16:00Z
+      end: Date.UTC(year, 11, 24, 16),    // Dec 25 00:00 UTC+8
+    });
+  </script>
+
+  <script>
     // ========= Utility =========
     const $ = (sel) => document.querySelector(sel);
     const toast = (msg) => { const el = $('#toast'); el.textContent = msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'), 2200); };
@@ -224,37 +246,26 @@
     const yearLabel = $('#yearLabel');
     const targetLabel = $('#targetLabel');
     const tz = $('#tz');
-    tz.textContent = new Intl.DateTimeFormat(undefined,{timeZoneName:'long'}).format(new Date()).split(', ').pop();
-
-    function nextChristmas(from = new Date()){
-      const y = from.getFullYear();
-      const target = new Date(y, 11, 25, 0,0,0,0); // Dec is 11
-      return from > target ? new Date(y+1, 11, 25) : target;
-    }
+    tz.textContent = 'All times UTC+8';
 
     let TARGET = nextChristmas();
-    yearLabel.textContent = TARGET.getFullYear();
+    yearLabel.textContent = christmasYear(TARGET);
 
     function updateTag(){
-      const now = new Date();
+      const now = Date.now();
       const diffDays = Math.ceil((TARGET - now) / (1000*60*60*24));
       const tagText = diffDays > 1 ? `Counting down to December 25` : diffDays === 1 ? `Christmas is tomorrow!` : diffDays === 0 ? `It's Christmas today!` : `Merry Christmas!`;
       $('#tagText').textContent = tagText;
     }
 
     function seasonPercent(){
-      // From Nov 1 (start of "holiday season") to Dec 25
-      const now = new Date();
-      const seasonStart = new Date(TARGET.getFullYear(), 10, 1, 0,0,0,0); // Nov 1
-      // if we're after Dec 25 but before next Nov, recompute using next year
-      const seasonEnd = new Date(TARGET.getFullYear(), 11, 25, 0,0,0,0);
-      const a = seasonStart.getTime(), b = seasonEnd.getTime(), t = now.getTime();
-      const pct = Math.max(0, Math.min(1, (t - a) / (b - a)));
-      return isFinite(pct) ? pct : 0;
+      // Nov 1 00:00 -> Dec 25 00:00 UTC+8; the window follows the target's year.
+      const { start, end } = seasonWindow(christmasYear(TARGET));
+      return Math.max(0, Math.min(1, (Date.now() - start) / (end - start)));
     }
 
     function tick(){
-      const now = new Date();
+      const now = Date.now();
       if (now > TARGET) {
         TARGET = nextChristmas(now);
         yearLabel.textContent = TARGET.getFullYear();
@@ -273,7 +284,7 @@
       bar.style.width = (seasonPercent()*100).toFixed(1) + '%';
       pctEl.textContent = (seasonPercent()*100).toFixed(1) + '%';
       updateTag();
-      // fire at exactly midnight Dec 25 local
+      // fire at exactly Dec 25 00:00 UTC+8
       if (ms <= 1000 && ms > -1000) celebrate();
     }
     tick();
@@ -292,15 +303,13 @@
     });
 
     $('#addToCalendar').addEventListener('click', () => {
-      const start = new Date(TARGET.getFullYear(), 11, 25, 0,0,0);
-      const end = new Date(TARGET.getFullYear(), 11, 26, 0,0,0);
-      const pad = (n)=> String(n).padStart(2,'0');
-      const fmt = (d)=> d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+pad(d.getUTCMinutes())+pad(d.getUTCSeconds())+'Z';
-      const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Christmas Countdown//EN\nBEGIN:VEVENT\nUID:${Date.now()}@xmas\nDTSTAMP:${fmt(new Date())}\nDTSTART:${fmt(start)}\nDTEND:${fmt(end)}\nSUMMARY:Christmas Day\nDESCRIPTION:Christmas Countdown reminder\nEND:VEVENT\nEND:VCALENDAR`;
+      const start = TARGET, end = TARGET + 86400000;   // Dec 25 00:00 -> Dec 26 00:00 UTC+8
+      const fmt = (ms)=> new Date(ms).toISOString().replace(/[-:]|\.\d{3}/g,'');
+      const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Christmas Countdown//EN\nBEGIN:VEVENT\nUID:${Date.now()}@xmas\nDTSTAMP:${fmt(Date.now())}\nDTSTART:${fmt(start)}\nDTEND:${fmt(end)}\nSUMMARY:Christmas Day\nDESCRIPTION:Christmas Countdown reminder\nEND:VEVENT\nEND:VCALENDAR`;
       const blob = new Blob([ics], {type:'text/calendar'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `christmas-${start.getFullYear()}.ics`; a.click();
+      a.href = url; a.download = `christmas-${christmasYear(TARGET)}.ics`; a.click();
       setTimeout(()=>URL.revokeObjectURL(url), 1500);
     });
 
